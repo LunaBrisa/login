@@ -1,0 +1,162 @@
+/* =========================
+   RESET
+========================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+:root{
+    --primary:#1f3c88;
+    --primary-hover:#17306e;
+    --background:#f4f6f9;
+    --white:#ffffff;
+    --text:#2d3436;
+    --border:#dfe6e9;
+    --error:#d63031;
+    --shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:var(--background);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+/* =========================
+   CARD LOGIN
+========================= */
+
+.auth-card{
+    width:100%;
+    max-width:420px;
+    background:var(--white);
+    border-radius:16px;
+    padding:40px;
+    box-shadow:var(--shadow);
+}
+
+/* =========================
+   LOGO
+========================= */
+
+.auth-brand{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.auth-brand img{
+    width:90px;
+    margin-bottom:15px;
+}
+
+.auth-brand h1{
+    font-size:1.8rem;
+    color:var(--primary);
+    margin-bottom:5px;
+}
+
+.auth-brand p{
+    color:#636e72;
+    font-size:.95rem;
+}
+
+/* =========================
+   ALERTAS
+========================= */
+
+.alert{
+    background:#ffeaea;
+    color:var(--error);
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:20px;
+    font-size:.9rem;
+}
+
+/* =========================
+   FORMULARIO
+========================= */
+
+.form-group{
+    margin-bottom:20px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:8px;
+    color:var(--text);
+    font-weight:600;
+    font-size:.95rem;
+}
+
+.input-wrapper{
+    position:relative;
+}
+
+.input-wrapper input{
+    width:100%;
+    padding:12px 45px 12px 15px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    outline:none;
+    transition:.3s;
+    font-size:15px;
+}
+
+.input-wrapper input:focus{
+    border-color:var(--primary);
+}
+
+.toggle-password{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    border:none;
+    background:none;
+    cursor:pointer;
+    font-size:18px;
+}
+
+/* =========================
+   BOTON
+========================= */
+
+.btn-primary{
+    width:100%;
+    border:none;
+    background:var(--primary);
+    color:white;
+    padding:14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:600;
+    transition:.3s;
+}
+
+.btn-primary:hover{
+    background:var(--primary-hover);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:480px){
+
+    .auth-card{
+        padding:30px 25px;
+    }
+
+    .auth-brand h1{
+        font-size:1.5rem;
+    }
+}

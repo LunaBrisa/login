@@ -1,241 +1,389 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-@livewireStyles
-<meta charset="UTF-8">
-<title>Login | BH Uniformes</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Login | BH Uniformes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-:root{
-    --azul-marino:#1a2845;
-    --azul-secundario:#2c4a7c;
-    --amarillo:#ffd700;
-}
+        :root {
+            --navy:   #1a2845;
+            --navy-2: #243660;
+            --gold:   #c9a227;
+            --gold-lt:#f5e9be;
+            --cream:  #faf9f7;
+            --border: #e0ddd6;
+            --muted:  #888580;
+        }
 
-/* BODY */
-body{
-    font-family:'Segoe UI',sans-serif;
-    background:linear-gradient(135deg,var(--azul-marino),var(--azul-secundario));
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f4f2ee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 1rem 2rem;
+        }
 
-/* HEADER */
-.header{
-    position:fixed;
-    top:0;
-    width:100%;
-    background:linear-gradient(to right,#000 20%, var(--azul-marino));
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:10px 5%;
-}
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--navy);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5%;
+            height: 64px;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
 
-.logo img{height:65px;}
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            color: #fff;
+            letter-spacing: 0.02em;
+            text-decoration: none;
+        }
 
-.nav a{
-    color:white;
-    margin-left:20px;
-    text-decoration:none;
-}
+        .logo span { color: var(--gold); }
 
-/* CONTENEDOR */
-.login-container{
-    margin-top:100px;
-    background:#fff;
-    border-radius:25px;
-    box-shadow:0 25px 60px rgba(0,0,0,0.3);
-    max-width:900px;
-    width:100%;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    overflow:hidden;
-}
+        .logo img { height: 44px; }
 
-/* IZQUIERDA */
-.login-info{
-    background:linear-gradient(135deg,var(--azul-marino),var(--azul-secundario));
-    color:white;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    text-align:center;
-    padding:50px;
-}
+        .nav a {
+            color: rgba(255,255,255,0.65);
+            margin-left: 28px;
+            text-decoration: none;
+            font-size: 13px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
 
-.login-info h2{
-    font-size:2.4rem;
-    margin-bottom:15px;
-}
+        .nav a:hover { color: #fff; }
 
-.login-info p{
-    font-size:1.2rem;
-    opacity:.9;
-    max-width:280px;
-}
+        /* CARD */
+        .auth-card {
+            background: #fff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+            border: 0.5px solid var(--border);
+        }
 
-/* DERECHA */
-.login-form{
-    padding:50px;
-}
+        /* PANEL IZQUIERDO */
+        .auth-panel {
+            background: var(--navy);
+            padding: 52px 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
 
-.subtitle{
-    margin-bottom:25px;
-    color:#666;
-}
+        .auth-panel::before {
+            content: '';
+            position: absolute;
+            top: -50px; right: -50px;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(201,162,39,0.1);
+        }
 
-/* INPUTS */
-.form-group{margin-bottom:20px;}
+        .auth-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -40px; left: -40px;
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            background: rgba(201,162,39,0.06);
+        }
 
-.input-wrapper{
-    position:relative;
-}
+        .panel-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            color: #fff;
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 1;
+        }
 
-.input-wrapper input{
-    width:100%;
-    padding:12px 45px 12px 40px;
-    border-radius:10px;
-    border:2px solid #ddd;
-}
+        .panel-brand span { color: var(--gold); }
 
-.input-icon{
-    position:absolute;
-    left:12px;
-    top:50%;
-    transform:translateY(-50%);
-}
+        .panel-tag {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
 
-.toggle-password{
-    position:absolute;
-    right:12px;
-    top:50%;
-    transform:translateY(-50%);
-    cursor:pointer;
-}
+        .panel-divider {
+            width: 36px;
+            height: 2px;
+            background: var(--gold);
+            margin-bottom: 28px;
+            position: relative;
+            z-index: 1;
+        }
 
-/* BOTÓN */
-.btn{
-    width:100%;
-    padding:15px;
-    border:none;
-    border-radius:10px;
-    background:var(--amarillo);
-    font-weight:bold;
-    cursor:pointer;
-}
+        .panel-title {
+            font-size: 22px;
+            color: #fff;
+            font-weight: 500;
+            line-height: 1.4;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
 
-/* ALERTAS */
-.alert{
-    padding:10px;
-    border-radius:8px;
-    margin-bottom:15px;
-}
+        .panel-sub {
+            font-size: 13.5px;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.75;
+            position: relative;
+            z-index: 1;
+        }
 
-.error{
-    background:#ffebee;
-    color:#c62828;
-}
+        /* FORMULARIO */
+        .auth-form {
+            padding: 48px 44px;
+        }
 
-/* RESPONSIVE */
-@media(max-width:768px){
-    .login-container{
-        grid-template-columns:1fr;
-    }
-    .login-info{display:none;}
-}
-</style>
+        .form-heading {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: var(--navy);
+            margin-bottom: 4px;
+        }
+
+        .form-sub {
+            font-size: 13.5px;
+            color: var(--muted);
+            margin-bottom: 32px;
+        }
+
+        /* ALERTA */
+        .alert-error {
+            background: #fff5f5;
+            border-left: 3px solid #e24b4a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #a32d2d;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* GRUPOS */
+        .form-group { margin-bottom: 20px; }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .input-wrap { position: relative; }
+
+        .input-wrap .icon-left {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 15px;
+            color: #c0bdb7;
+            pointer-events: none;
+        }
+
+        .input-wrap input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--navy);
+            background: var(--cream);
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .input-wrap input:focus {
+            border-color: var(--gold);
+            background: #fff;
+        }
+
+        .input-wrap input.is-invalid {
+            border-color: #e24b4a;
+        }
+
+        .toggle-eye {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 15px;
+            color: #c0bdb7;
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+        }
+
+        /* BOTÓN PRIMARIO */
+        .btn-primary {
+            width: 100%;
+            padding: 13px;
+            background: var(--navy);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s;
+            margin-top: 6px;
+        }
+
+        .btn-primary:hover { background: var(--navy-2); }
+
+        /* ENLACE INFERIOR */
+        .form-footer {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 13px;
+            color: #b0ada8;
+        }
+
+        .form-footer a {
+            color: var(--gold);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 680px) {
+            .auth-card { grid-template-columns: 1fr; }
+            .auth-panel { display: none; }
+            .auth-form { padding: 36px 28px; }
+        }
+    </style>
 </head>
 
 <body>
 
-@auth
-<script>
-    window.location.href = "/admin";
-</script>
-@endauth
+    <div class="auth-card">
 
-<header class="header">
-    <div class="logo">
-        <img src="{{ asset('img/logo.png') }}">
-    </div>
-
-    <nav class="nav">
-        <a href="/">Inicio</a>
-        <a href="/catalogo">Catálogo</a>
-        <a href="/nosotros">Nosotros</a>
-
-        @guest
-            <a href="/login">Login</a>
-        @endguest
-    </nav>
-</header>
-
-<div class="login-container">
-
-    <!-- IZQUIERDA -->
-    <div class="login-info">
-        <h2>BH Uniformes</h2>
-        <p>Inicia sesión para gestionar tu sistema</p>
-    </div>
-
-    <!-- DERECHA -->
-    <div class="login-form">
-        <h1>Login</h1>
-        <p class="subtitle">Accede a tu cuenta</p>
-
-        @if ($errors->any())
-        <div class="alert error">
-            {{ $errors->first('email') }}
+        <!-- Panel izquierdo -->
+        <div class="auth-panel">
+            <div class="panel-brand">BH <span>Uniformes</span></div>
+            <div class="panel-tag">Portal de gestión</div>
+            <div class="panel-divider"></div>
+            <div class="panel-title">Bienvenido de vuelta</div>
+            <div class="panel-sub">Accede a tu cuenta para gestionar pedidos, clientes y catálogo de uniformes.</div>
         </div>
-        @endif
 
-        <form action="{{ route('login') }}" method="POST">
-            @csrf
+        <!-- Formulario -->
+        <div class="auth-form">
+            <h1 class="form-heading">Iniciar sesión</h1>
+            <p class="form-sub">Ingresa tus credenciales para continuar</p>
 
-            <div class="form-group">
-                <label>Correo</label>
-                <div class="input-wrapper">
-                    <span class="input-icon">📧</span>
-                    <input type="email" name="email" value="{{ old('email') }}" required>
+            @if ($errors->any())
+                <div class="alert-error">
+                    <i class="ti ti-alert-circle" aria-hidden="true"></i>
+                    {{ $errors->first() }}
                 </div>
-            </div>
+            @endif
 
-            <div class="form-group">
-                <label>Contraseña</label>
-                <div class="input-wrapper">
-                    <span class="input-icon">🔒</span>
-                    <input type="password" id="password" name="password" required>
-                    <span class="toggle-password" onclick="togglePassword()">👁️</span>
+            <form action="{{ route('login') }}" method="POST" novalidate>
+                @csrf
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Correo electrónico</label>
+                    <div class="input-wrap">
+                        <i class="ti ti-mail icon-left" aria-hidden="true"></i>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value="{{ old('email') }}"
+                            placeholder="correo@ejemplo.com"
+                            autocomplete="email"
+                            class="{{ $errors->has('email') ? 'is-invalid' : '' }}"
+                            required>
+                    </div>
                 </div>
-            </div>
 
-            <button class="btn">Iniciar sesión</button>
-        </form>
+                <div class="form-group">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <div class="input-wrap">
+                        <i class="ti ti-lock icon-left" aria-hidden="true"></i>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="••••••••"
+                            autocomplete="current-password"
+                            class="{{ $errors->has('password') ? 'is-invalid' : '' }}"
+                            required>
+                        <button type="button" class="toggle-eye" onclick="togglePassword('password', this)" aria-label="Mostrar contraseña">
+                            <i class="ti ti-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Iniciar sesión</button>
+            </form>
+
+            <p class="form-footer">
+                ¿No tienes cuenta? <a href="{{ route('register') }}">Regístrate aquí</a>
+            </p>
+        </div>
+
     </div>
 
-</div>
+    <script>
+        function togglePassword(fieldId, btn) {
+            const input = document.getElementById(fieldId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'ti ti-eye-off';
+                btn.setAttribute('aria-label', 'Ocultar contraseña');
+            } else {
+                input.type = 'password';
+                icon.className = 'ti ti-eye';
+                btn.setAttribute('aria-label', 'Mostrar contraseña');
+            }
+        }
+    </script>
 
-<script>
-function togglePassword(){
-    const input = document.getElementById("password");
-    const icon = document.querySelector(".toggle-password");
 
-    if(input.type === "password"){
-        input.type = "text";
-        icon.textContent = "🙈";
-    }else{
-        input.type = "password";
-        icon.textContent = "👁️";
-    }
-}
-</script>
-@livewireScripts
 </body>
 </html>

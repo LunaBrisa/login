@@ -349,11 +349,7 @@
             <a href="/" class="logo">BH <span>Uniformes</span></a>
         @endif
 
-        <nav class="nav">
-            <a href="/">Inicio</a>
-            <a href="/catalogo">Catálogo</a>
-            <a href="/nosotros">Nosotros</a>
-        </nav>
+
     </header>
 
     <div class="auth-card">
@@ -451,6 +447,14 @@
                         <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <div class="form-group" style="display: none;">
+                    <selecct id="rol" name="rol">
+                        <option value="admin">Administrador</option>
+                        <option value="user">Usuario</option>
+                        <option value="guest">Invitado</option>
+                    </select>
+                </div>  
 
                 <div class="form-group">
                     <label for="password" class="form-label">Contraseña</label>

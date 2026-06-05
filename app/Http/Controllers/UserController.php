@@ -22,7 +22,7 @@ class UserController extends Controller
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|confirmed|min:8',
                 'password_confirmation' => 'required|min:8',
-                'rol' => 'required|in:admin,user,guest', // Valida que el rol pertenezca a los tres permitidos
+                'rol' => 'required|in:admin,user,guest', 
             ],
             [
                 'name.required' => 'El nombre es obligatorio.',
@@ -84,7 +84,7 @@ class UserController extends Controller
             
             $user->update([
                 'otp_code' => $otp,
-                'otp_expires_at' => now()->addDay() // Vence en 5 minutos
+                'otp_expires_at' => now()->addDay() 
             ]);
 
             // Guardamos el ID en sesión temporalmente sin otorgar la sesión Auth definitiva
@@ -160,7 +160,7 @@ if ($user->rol === 'admin') {
     
     // SIMULACIÓN: Inventamos una IP permitida falsa. 
     // Como tu laptop NO tiene esta IP, el sistema te detectará como un intruso.
-    $ipPermitida = '192.168.1.99'; 
+    $ipPermitida = '127.0.0.1'; 
 
     // Si tu IP real no es la falsa, te bloquea inmediatamente
     if ($userIp !== $ipPermitida) {

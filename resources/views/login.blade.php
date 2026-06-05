@@ -57,7 +57,6 @@
         }
 
         .logo span { color: var(--gold); }
-
         .logo img { height: 44px; }
 
         .nav a {
@@ -162,22 +161,9 @@
         }
 
         /* FORMULARIO */
-        .auth-form {
-            padding: 48px 44px;
-        }
-
-        .form-heading {
-            font-family: 'Playfair Display', serif;
-            font-size: 24px;
-            color: var(--navy);
-            margin-bottom: 4px;
-        }
-
-        .form-sub {
-            font-size: 13.5px;
-            color: var(--muted);
-            margin-bottom: 32px;
-        }
+        .auth-form { padding: 48px 44px; }
+        .form-heading { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--navy); margin-bottom: 4px; }
+        .form-sub { font-size: 13.5px; color: var(--muted); margin-bottom: 32px; }
 
         /* ALERTA */
         .alert-error {
@@ -235,9 +221,7 @@
             background: #fff;
         }
 
-        .input-wrap input.is-invalid {
-            border-color: #e24b4a;
-        }
+        .input-wrap input.is-invalid { border-color: #e24b4a; }
 
         .toggle-eye {
             position: absolute;
@@ -274,18 +258,8 @@
         .btn-primary:hover { background: var(--navy-2); }
 
         /* ENLACE INFERIOR */
-        .form-footer {
-            text-align: center;
-            margin-top: 22px;
-            font-size: 13px;
-            color: #b0ada8;
-        }
-
-        .form-footer a {
-            color: var(--gold);
-            text-decoration: none;
-            font-weight: 500;
-        }
+        .form-footer { text-align: center; margin-top: 22px; font-size: 13px; color: #b0ada8; }
+        .form-footer a { color: var(--gold); text-decoration: none; font-weight: 500; }
 
         /* RESPONSIVE */
         @media (max-width: 680px) {
@@ -294,13 +268,12 @@
             .auth-form { padding: 36px 28px; }
         }
     </style>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 
 <body>
 
     <div class="auth-card">
-
-        <!-- Panel izquierdo -->
         <div class="auth-panel">
             <div class="panel-brand">BH <span>Uniformes</span></div>
             <div class="panel-tag">Portal de gestión</div>
@@ -309,7 +282,6 @@
             <div class="panel-sub">Accede a tu cuenta para gestionar pedidos, clientes y catálogo de uniformes.</div>
         </div>
 
-        <!-- Formulario -->
         <div class="auth-form">
             <h1 class="form-heading">Iniciar sesión</h1>
             <p class="form-sub">Ingresa tus credenciales para continuar</p>
@@ -358,6 +330,8 @@
                     </div>
                 </div>
 
+<div class="g-recaptcha" data-sitekey="6Lcg8w4tAAAAAC42aNB5tNHGCWvfopUNqhupL5g_" style="margin-bottom: 20px; display: flex; justify-content: center;"></div>
+
                 <button type="submit" class="btn-primary">Iniciar sesión</button>
             </form>
 
@@ -365,7 +339,6 @@
                 ¿No tienes cuenta? <a href="{{ route('register') }}">Regístrate aquí</a>
             </p>
         </div>
-
     </div>
 
     <script>
@@ -383,7 +356,6 @@
             }
         }
     </script>
-
 
 </body>
 </html>

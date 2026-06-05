@@ -51,26 +51,41 @@ class UserController extends Controller
     }
 
     /**
-     * LOGIN: FACTOR 1 (Contraseña y Evaluación de Roles)
+     * LOGIN: FACTOR 1 (Contraseña, reCAPTCHA y Evaluación de Roles)
      */
     public function login(Request $request)
     {
+        // 1. Validación de campos (Ahora exige que el reCAPTCHA haya sido marcado)
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
+            'g-recaptcha-response' => 'required' 
         ], [
             'email.required' => 'El correo es obligatorio.',
             'email.email' => 'El correo no es válido.',
             'password.required' => 'La contraseña es obligatoria.',
+            'g-recaptcha-response.required' => 'Por favor, completa el reCAPTCHA de seguridad.',
         ]);
 
-        // Buscamos al usuario de forma manual para verificar credenciales antes de loguearlo
+        // 2. VERIFICACIÓN CON EL SERVIDOR DE GOOGLE: Validamos el token en el backend
+        $response = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => env('RECAPTCHA_SECRET_KEY'),
+            'response' => $request->input('g-recaptcha-response'),
+            'remoteip' => $request->ip()
+        ]);
+
+        // Si Google nos dice que la validación falló o es falsa, lo rebotamos
+        if (!$response->json('success')) {
+            return back()->withErrors([
+                'email' => 'La verificación del reCAPTCHA ha fallado. Inténtalo de nuevo.'
+            ])->withInput();
+        }
+
+        // 3. CONTINÚA EL FLUJO NORMAL DEL FACTOR 1 (Si el captcha fue exitoso)
         $user = User::where('email', $request->email)->first();
 
         if ($user && Hash::check($request->password, $user->password)) {
             
-            // --- FACTOR 1 COMPLETADO CON ÉXITO ---
-
             // CASO 1: ROL INVITADO (guest) -> 1 solo factor. Entra directo.
             if ($user->rol === 'guest') {
                 Auth::login($user);
@@ -79,25 +94,20 @@ class UserController extends Controller
             }
 
             // CASO 2: ROL USUARIO (user) o ADMIN (admin) -> Requieren OTP (2FA / 3FA)
-            // Generamos token numérico aleatorio de un solo uso (OTP)
             $otp = rand(100000, 999999);
             
             $user->update([
                 'otp_code' => $otp,
-                'otp_expires_at' => now()->addDay() // Vence en 5 minutos
+                'otp_expires_at' => now()->addDay() 
             ]);
 
-            // Guardamos el ID en sesión temporalmente sin otorgar la sesión Auth definitiva
             session(['mfa_user_id' => $user->id]);
 
-            // Logger de Auditoría de Sistemas: Registra el código de verificación en storage/logs/laravel.log
             \Log::info("Auditoría de Seguridad - OTP generado para {$user->email}: {$otp}");
 
-            // Redirigimos a la pantalla del segundo factor
             return redirect()->route('mfa.verify');
         }
 
-        // Si fallan las credenciales, regresamos con error mitigando ataques de enumeración
         return back()->withErrors([
             'email' => 'Credenciales incorrectas'
         ])->withInput();
@@ -154,31 +164,28 @@ class UserController extends Controller
             }
 
             // CASO B: ROL ADMINISTRADOR (admin) -> Requiere evaluar el FACTOR 3 (Seguridad de Red e IP)
-           // CASO B: ROL ADMINISTRADOR (admin) -> Requiere evaluar el FACTOR 3 (Seguridad de Red e IP)
-if ($user->rol === 'admin') {
-    $userIp = $request->ip(); // Aquí Laravel lee tu IP real (que es 127.0.0.1 o ::1)
-    
-    // SIMULACIÓN: Inventamos una IP permitida falsa. 
-    // Como tu laptop NO tiene esta IP, el sistema te detectará como un intruso.
-    $ipPermitida = '192.168.1.99'; 
+            if ($user->rol === 'admin') {
+                $userIp = $request->ip(); // Extrae la IP de la petición del cliente
+                
+                // IP Fija autorizada. Para tu entorno local usas '127.0.0.1' o '::1'
+                $ipPermitida = '127.0.0.1'; 
 
-    // Si tu IP real no es la falsa, te bloquea inmediatamente
-    if ($userIp !== $ipPermitida) {
-        // Auditoría: Registra el intento de hackeo en el archivo laravel.log
-        \Log::warning("Alerta de Seguridad: El administrador {$user->email} intentó acceder desde una IP no autorizada: {$userIp}");
-        
-        session()->forget('mfa_user_id');
-        return redirect()->route('login')->withErrors([
-            'email' => 'Acceso denegado: IP de conexión no autorizada para privilegios administrativos (3FA Fallido).'
-        ]);
-    }
+                // Algunos servidores locales devuelven la IP v6 local '::1' en vez de '127.0.0.1'
+                if ($userIp !== $ipPermitida && $userIp !== '::1') {
+                    \Log::warning("Alerta de Seguridad: El administrador {$user->email} intentó acceder desde una IP no autorizada: {$userIp}");
+                    
+                    session()->forget('mfa_user_id');
+                    return redirect()->route('login')->withErrors([
+                        'email' => 'Acceso denegado: IP de conexión no autorizada para privilegios administrativos.'
+                    ]);
+                }
 
-    // --- SI PASARA LAS 3 CAPAS (No entrará aquí en la prueba) ---
-    Auth::login($user);
-    session()->forget('mfa_user_id');
-    $request->session()->regenerate();
-    return redirect()->route('admin');
-}
+                // --- FACTOR 3 COMPLETADO CON ÉXITO ---
+                Auth::login($user);
+                session()->forget('mfa_user_id');
+                $request->session()->regenerate();
+                return redirect()->route('admin');
+            }
         }
 
         return back()->withErrors(['code' => 'El código es incorrecto o ha expirado.']);

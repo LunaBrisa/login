@@ -448,14 +448,6 @@
                     @enderror
                 </div>
 
-                <div class="form-group" style="display: none;">
-                    <selecct id="rol" name="rol">
-                        <option value="admin">Administrador</option>
-                        <option value="user">Usuario</option>
-                        <option value="guest">Invitado</option>
-                    </select>
-                </div>  
-
                 <div class="form-group">
                     <label for="password" class="form-label">Contraseña</label>
                     <div class="input-wrap">

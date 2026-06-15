@@ -456,7 +456,7 @@
                             type="password"
                             id="password"
                             name="password"
-                            placeholder="Mínimo 8 caracteres"
+                            placeholder="Mínimo 20 caracteres"
                             autocomplete="new-password"
                             oninput="checkStrength(this.value)"
                             class="{{ $errors->has('password') ? 'is-invalid' : '' }}"

@@ -6,26 +6,41 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
+
             $table->id();
+
             $table->string('name');
-            $table->string('email')->unique();
-            $table->enum('rol', ['admin', 'user', 'guest']);
-            $table->timestamp('email_verified_at')->nullable();
+
+            $table->string('email')
+                ->unique();
+
+            $table->timestamp('email_verified_at')
+                ->nullable();
+
             $table->string('password');
+
+            // Roles requeridos
+            $table->enum('rol', [
+                'guest',
+                'user',
+                'admin'
+            ])->default('guest');
+
+            // MFA
+            $table->string('otp_code')
+                ->nullable();
+
+            $table->timestamp('otp_expires_at')
+                ->nullable();
+
             $table->rememberToken();
+
             $table->timestamps();
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');

@@ -7,13 +7,20 @@ Route::get('/login', function () {
     return view('login');
 })->name('login');
 
-Route::post('login', [UserController::class, 'login']);
+Route::post(
+    'login',
+    [UserController::class, 'login']
+)->middleware('throttle:5,1');
 
-Route::get('/register', function () {
+Route::post(
+    'register',
+    [UserController::class, 'register']
+)->middleware('throttle:3,1');
+
+Route::get('/', function () {
         return view('register');
     })->name('register');
 
-Route::post('register', [UserController::class, 'register']);
 
 Route::get('/mfa-verify', [UserController::class, 'showMfaForm'])->name('mfa.verify');
 Route::post('/mfa-verify', [UserController::class, 'verifyMfa'])->name('mfa.store');
@@ -23,7 +30,14 @@ Route::middleware(['auth'])->group(function () {
     
     Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
-    Route::get('/admin', function () {
-        return "<h1>Bienvenido al Panel de Administración Seguro (3 Factores verificados)</h1>";
-    })->name('admin');
+Route::get('/admin', function () {
+
+    if (auth()->user()->rol !== 'admin') {
+        abort(403);
+    }
+
+    return view('admin');
+
+})->name('admin');
 });
+

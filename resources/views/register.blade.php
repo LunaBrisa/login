@@ -8,7 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-
+    <script src="https://www.google.com/recaptcha/api.js"
+        async
+        defer>
+    </script>
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -390,111 +393,156 @@
                 </div>
             @endif
 
-            <form action="{{ route('register') }}" method="POST" novalidate>
-                @csrf
+<form action="{{ route('register.store') }}" method="POST" novalidate>
+    @csrf
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="name" class="form-label">Nombre</label>
-                        <div class="input-wrap">
-                            <i class="ti ti-user icon-left" aria-hidden="true"></i>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value="{{ old('name') }}"
-                                placeholder="Juan"
-                                autocomplete="given-name"
-                                class="{{ $errors->has('name') ? 'is-invalid' : '' }}"
-                                required>
-                        </div>
-                        @error('name')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="name" class="form-label">Nombre</label>
+            <div class="input-wrap">
+                <i class="ti ti-user icon-left" aria-hidden="true"></i>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value="{{ old('name') }}"
+                    placeholder="Juan"
+                    autocomplete="given-name"
+                    class="{{ $errors->has('name') ? 'is-invalid' : '' }}">
+            </div>
 
-                    <div class="form-group">
-                        <label for="apellido" class="form-label">Apellido</label>
-                        <div class="input-wrap">
-                            <i class="ti ti-user icon-left" aria-hidden="true"></i>
-                            <input
-                                type="text"
-                                id="apellido"
-                                name="apellido"
-                                value="{{ old('apellido') }}"
-                                placeholder="García"
-                                autocomplete="family-name"
-                                class="{{ $errors->has('apellido') ? 'is-invalid' : '' }}">
-                        </div>
-                    </div>
-                </div>
+            @error('name')
+                <p class="field-error">{{ $message }}</p>
+            @enderror
+        </div>
 
-                <div class="form-group">
-                    <label for="email" class="form-label">Correo electrónico</label>
-                    <div class="input-wrap">
-                        <i class="ti ti-mail icon-left" aria-hidden="true"></i>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value="{{ old('email') }}"
-                            placeholder="correo@ejemplo.com"
-                            autocomplete="email"
-                            class="{{ $errors->has('email') ? 'is-invalid' : '' }}"
-                            required>
-                    </div>
-                    @error('email')
-                        <p class="field-error">{{ $message }}</p>
-                    @enderror
-                </div>
+        <div class="form-group">
+            <label for="apellido" class="form-label">Apellido</label>
+            <div class="input-wrap">
+                <i class="ti ti-user icon-left" aria-hidden="true"></i>
+                <input
+                    type="text"
+                    id="apellido"
+                    name="apellido"
+                    value="{{ old('apellido') }}"
+                    placeholder="García"
+                    autocomplete="family-name"
+                    class="{{ $errors->has('apellido') ? 'is-invalid' : '' }}">
+            </div>
 
-                <div class="form-group">
-                    <label for="password" class="form-label">Contraseña</label>
-                    <div class="input-wrap">
-                        <i class="ti ti-lock icon-left" aria-hidden="true"></i>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            placeholder="Mínimo 20 caracteres"
-                            autocomplete="new-password"
-                            oninput="checkStrength(this.value)"
-                            class="{{ $errors->has('password') ? 'is-invalid' : '' }}"
-                            required>
-                        <button type="button" class="toggle-eye" onclick="togglePassword('password', this)" aria-label="Mostrar contraseña">
-                            <i class="ti ti-eye" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <div class="strength-bar">
-                        <span id="s1"></span>
-                        <span id="s2"></span>
-                        <span id="s3"></span>
-                        <span id="s4"></span>
-                    </div>
-                    @error('password')
-                        <p class="field-error">{{ $message }}</p>
-                    @enderror
-                </div>
+            @error('apellido')
+                <p class="field-error">{{ $message }}</p>
+            @enderror
+        </div>
+    </div>
 
-                <div class="form-group">
-                    <label for="password_confirmation" class="form-label">Confirmar contraseña</label>
-                    <div class="input-wrap">
-                        <i class="ti ti-lock-check icon-left" aria-hidden="true"></i>
-                        <input
-                            type="password"
-                            id="password_confirmation"
-                            name="password_confirmation"
-                            placeholder="Repite tu contraseña"
-                            autocomplete="new-password"
-                            required>
-                        <button type="button" class="toggle-eye" onclick="togglePassword('password_confirmation', this)" aria-label="Mostrar contraseña">
-                            <i class="ti ti-eye" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
+    <div class="form-group">
+        <label for="email" class="form-label">
+            Correo electrónico
+        </label>
 
-                <button type="submit" class="btn-primary">Crear cuenta</button>
-            </form>
+        <div class="input-wrap">
+            <i class="ti ti-mail icon-left" aria-hidden="true"></i>
+
+            <input
+                type="email"
+                id="email"
+                name="email"
+                value="{{ old('email') }}"
+                placeholder="correo@ejemplo.com"
+                autocomplete="email"
+                class="{{ $errors->has('email') ? 'is-invalid' : '' }}">
+        </div>
+
+        @error('email')
+            <p class="field-error">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div class="form-group">
+        <label for="password" class="form-label">
+            Contraseña
+        </label>
+
+        <div class="input-wrap">
+            <i class="ti ti-lock icon-left" aria-hidden="true"></i>
+
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Mínimo 20 caracteres"
+                autocomplete="new-password"
+                oninput="checkStrength(this.value)"
+                class="{{ $errors->has('password') ? 'is-invalid' : '' }}">
+
+            <button
+                type="button"
+                class="toggle-eye"
+                onclick="togglePassword('password', this)"
+                aria-label="Mostrar contraseña">
+
+                <i class="ti ti-eye" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div class="strength-bar">
+            <span id="s1"></span>
+            <span id="s2"></span>
+            <span id="s3"></span>
+            <span id="s4"></span>
+        </div>
+
+        @error('password')
+            <p class="field-error">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div class="form-group">
+        <label for="password_confirmation" class="form-label">
+            Confirmar contraseña
+        </label>
+
+        <div class="input-wrap">
+            <i class="ti ti-lock-check icon-left" aria-hidden="true"></i>
+
+            <input
+                type="password"
+                id="password_confirmation"
+                name="password_confirmation"
+                placeholder="Repite tu contraseña"
+                autocomplete="new-password">
+
+            <button
+                type="button"
+                class="toggle-eye"
+                onclick="togglePassword('password_confirmation', this)"
+                aria-label="Mostrar contraseña">
+
+                <i class="ti ti-eye" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- RECAPTCHA -->
+    <div style="margin-bottom: 20px; display:flex; justify-content:center;">
+        <div
+            class="g-recaptcha"
+            data-sitekey="{{ config('services.recaptcha.site_key') }}">
+        </div>
+    </div>
+
+    @error('g-recaptcha-response')
+        <p class="field-error" style="text-align:center;">
+            {{ $message }}
+        </p>
+    @enderror
+
+    <!-- BOTÓN -->
+    <button type="submit" class="btn-primary">
+        Crear cuenta
+    </button>
+</form>
 
             <p class="form-footer">
                 ¿Ya tienes cuenta? <a href="{{ route('login') }}">Inicia sesión aquí</a>
@@ -504,6 +552,7 @@
     </div>
 
     <script>
+
         function togglePassword(fieldId, btn) {
             const input = document.getElementById(fieldId);
             const icon = btn.querySelector('i');
@@ -526,7 +575,7 @@
                 document.getElementById('s4'),
             ];
             let score = 0;
-            if (val.length >= 8)          score++;
+            if (val.length >= 20)          score++;
             if (/[A-Z]/.test(val))         score++;
             if (/[0-9]/.test(val))         score++;
             if (/[^A-Za-z0-9]/.test(val)) score++;

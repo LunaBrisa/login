@@ -10,12 +10,12 @@ Route::get('/login', function () {
 Route::post(
     'login',
     [UserController::class, 'login']
-)->middleware('throttle:5,1');
+)->middleware('throttle:5,1')->name('login.store');
 
 Route::post(
     'register',
     [UserController::class, 'register']
-)->middleware('throttle:3,1');
+)->middleware('throttle:3,1')->name('register.store');
 
 Route::get('/', function () {
         return view('register');
@@ -39,5 +39,24 @@ Route::get('/admin', function () {
     return view('admin');
 
 })->name('admin');
-});
 
+Route::get('/user', function () {
+
+    if (auth()->user()->rol !== 'user') {
+        abort(403);
+    }
+
+    return view('user');
+
+})->name('user');
+
+Route::get('/guest', function () {
+
+    if (auth()->user()->rol !== 'guest') {
+        abort(403);
+    }
+
+    return view('guest');
+
+})->name('guest');
+});

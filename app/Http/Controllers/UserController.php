@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
 use App\Models\User;
 use App\Models\AuditLog;
 
@@ -336,60 +338,64 @@ class UserController extends Controller
                     ->withInput();
             }
 
-            /**
-             * MFA SOLO ADMIN Y USER
-             */
-            if (
-                $user->rol === 'admin' ||
-                $user->rol === 'user'
-            ) {
+           /**
+ * MFA SOLO ADMIN Y USER
+ */
+if (
+    $user->rol === 'admin' ||
+    $user->rol === 'user'
+) {
 
-                $otp = rand(
-                    100000,
-                    999999
-                );
+    $otp = rand(
+        100000,
+        999999
+    );
 
-                $user->update([
-                    'otp_code' => $otp,
-                    'otp_expires_at' =>
-                        now()->addMinutes(5)
-                ]);
+    $user->update([
+        'otp_code' => $otp,
+        'otp_expires_at' =>
+            now()->addMinutes(5)
+    ]);
 
-                session([
-                    'mfa_user_id' =>
-                        $user->id
-                ]);
+    // ENVIAR OTP POR CORREO
+    Mail::to($user->email)
+        ->send(new OtpMail($otp));
 
-                Log::info(
-                    'OTP generado',
-                    [
-                        'email' =>
-                            $user->email,
-                        'rol' =>
-                            $user->rol,
-                        'ip' =>
-                            $request->ip(),
-                        'otp' =>
-                            $otp
-                    ]
-                );
+    session([
+        'mfa_user_id' =>
+            $user->id
+    ]);
 
-                AuditLog::create([
-                    'user_id' =>
-                        $user->id,
-                    'accion' =>
-                        'OTP_GENERADO',
-                    'email' =>
-                        $user->email,
-                    'ip' =>
-                        $request->ip(),
-                    'descripcion' =>
-                        'Código MFA generado'
-                ]);
+    Log::info(
+        'OTP generado',
+        [
+            'email' =>
+                $user->email,
+            'rol' =>
+                $user->rol,
+            'ip' =>
+                $request->ip(),
+            'otp' =>
+                $otp
+        ]
+    );
 
-                return redirect()
-                    ->route('mfa.verify');
-            }
+    AuditLog::create([
+        'user_id' =>
+            $user->id,
+        'accion' =>
+            'OTP_GENERADO',
+        'email' =>
+            $user->email,
+        'ip' =>
+            $request->ip(),
+        'descripcion' =>
+            'Código MFA generado y enviado por correo'
+    ]);
+
+    return redirect()
+        ->route('mfa.verify');
+}
 
             /**
              * GUEST ENTRA DIRECTO
@@ -527,7 +533,7 @@ class UserController extends Controller
         ) {
 
             $ipPermitida =
-                '172.0.0.1';
+                '127.0.0.1';
 
             if (
                 $request->ip()

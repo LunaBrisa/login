@@ -492,7 +492,23 @@
             <span id="s3"></span>
             <span id="s4"></span>
         </div>
+<div style="display:flex; gap:10px; margin-top:10px;">
+    <button
+        type="button"
+        class="btn-primary"
+        style="padding:8px 12px; font-size:14px;"
+        onclick="generarPassword()">
+        🔐 Generar contraseña segura
+    </button>
 
+    <button
+        type="button"
+        class="btn-primary"
+        style="padding:8px 12px; font-size:14px;"
+        onclick="copiarPassword()">
+        📋 Copiar
+    </button>
+</div>
         @error('password')
             <p class="field-error">{{ $message }}</p>
         @enderror
@@ -551,41 +567,78 @@
 
     </div>
 
-    <script>
+  <script>
 
-        function togglePassword(fieldId, btn) {
-            const input = document.getElementById(fieldId);
-            const icon = btn.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'ti ti-eye-off';
-                btn.setAttribute('aria-label', 'Ocultar contraseña');
-            } else {
-                input.type = 'password';
-                icon.className = 'ti ti-eye';
-                btn.setAttribute('aria-label', 'Mostrar contraseña');
-            }
+function togglePassword(fieldId, btn) {
+    const input = document.getElementById(fieldId);
+    const icon = btn.querySelector('i');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'ti ti-eye-off';
+    } else {
+        input.type = 'password';
+        icon.className = 'ti ti-eye';
+    }
+}
+
+function checkStrength(val) {
+
+    const bars = [
+        document.getElementById('s1'),
+        document.getElementById('s2'),
+        document.getElementById('s3'),
+        document.getElementById('s4'),
+    ];
+
+    let score = 0;
+
+    if (val.length >= 20) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    bars.forEach((b, i) => {
+        b.className = '';
+        if (i < score) {
+            b.classList.add(`active-${score}`);
         }
+    });
+}
 
-        function checkStrength(val) {
-            const bars = [
-                document.getElementById('s1'),
-                document.getElementById('s2'),
-                document.getElementById('s3'),
-                document.getElementById('s4'),
-            ];
-            let score = 0;
-            if (val.length >= 20)          score++;
-            if (/[A-Z]/.test(val))         score++;
-            if (/[0-9]/.test(val))         score++;
-            if (/[^A-Za-z0-9]/.test(val)) score++;
+function generarPassword() {
 
-            bars.forEach((b, i) => {
-                b.className = '';
-                if (i < score) b.classList.add(`active-${score}`);
-            });
-        }
-    </script>
+    const caracteres =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_-+=<>?';
+
+    let password = '';
+
+    for (let i = 0; i < 20; i++) {
+        password += caracteres.charAt(
+            Math.floor(Math.random() * caracteres.length)
+        );
+    }
+
+    document.getElementById('password').value = password;
+    document.getElementById('password_confirmation').value = password;
+
+    checkStrength(password);
+}
+
+function copiarPassword() {
+
+    const password = document.getElementById('password').value;
+
+    if (!password) {
+        alert('Primero genera una contraseña');
+        return;
+    }
+
+    navigator.clipboard.writeText(password);
+    alert('Contraseña copiada al portapapeles');
+}
+
+</script>
 
    
 </body>

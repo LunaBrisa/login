@@ -11,18 +11,12 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OtpMail;
 use App\Models\User;
-use App\Models\AuditLog;
 
 class UserController extends Controller
 {
-    /**
-     * REGISTRO
-     */
     public function register(Request $request)
     {
         try {
-
-            // Sanitización
             $request->merge([
                 'name' => strip_tags(trim($request->name)),
                 'apellido' => strip_tags(trim($request->apellido)),
@@ -34,624 +28,363 @@ class UserController extends Controller
                 'ip' => $request->ip()
             ]);
 
-            // Validación
             $request->validate([
                 'name' => 'required|string|max:255',
                 'apellido' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
-
                 'password' => [
                     'required',
                     'confirmed',
-                    Password::min(20)
-                        ->mixedCase()
-                        ->numbers()
-                        ->symbols()
+                    Password::min(20)->mixedCase()->numbers()->symbols()
                 ],
-
                 'password_confirmation' => 'required',
                 'g-recaptcha-response' => 'required'
-
             ], [
-                'name.required' =>
-                    'El nombre es obligatorio.',
-
-                'apellido.required' =>
-                    'El apellido es obligatorio.',
-
-                'email.required' =>
-                    'El correo es obligatorio.',
-
-                'email.email' =>
-                    'El correo no es válido.',
-
-                'email.unique' =>
-                    'Este correo ya está registrado.',
-
-                'password.required' =>
-                    'La contraseña es obligatoria.',
-
-                'password.confirmed' =>
-                    'Las contraseñas no coinciden.',
-
-                'g-recaptcha-response.required' =>
-                    'Completa el reCAPTCHA.'
+                'name.required' => 'El nombre es obligatorio.',
+                'apellido.required' => 'El apellido es obligatorio.',
+                'email.required' => 'El correo es obligatorio.',
+                'email.email' => 'El correo no es válido.',
+                'email.unique' => 'Este correo ya está registrado.',
+                'password.required' => 'La contraseña es obligatoria.',
+                'password.confirmed' => 'Las contraseñas no coinciden.',
+                'g-recaptcha-response.required' => 'Completa el reCAPTCHA.'
             ]);
 
-            // Verificar reCAPTCHA
-            $response = Http::asForm()->post(
-                'https://www.google.com/recaptcha/api/siteverify',
-                [
-                    'secret' =>
-                        config('services.recaptcha.secret_key'),
-
-                    'response' =>
-                        $request->input(
-                            'g-recaptcha-response'
-                        ),
-
-                    'remoteip' =>
-                        $request->ip(),
-                ]
-            );
+            $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => config('services.recaptcha.secret_key'),
+                'response' => $request->input('g-recaptcha-response'),
+                'remoteip' => $request->ip(),
+            ]);
 
             $recaptchaData = $response->json();
 
             if (!($recaptchaData['success'] ?? false)) {
+                Log::warning('Registro fallido por reCAPTCHA', [
+                    'ip' => $request->ip(),
+                    'email' => $request->email,
+                    'errors' => $recaptchaData['error-codes'] ?? []
+                ]);
 
-                Log::warning(
-                    'Registro fallido por reCAPTCHA',
-                    [
-                        'ip' => $request->ip(),
-                        'email' => $request->email,
-                        'errors' =>
-                            $recaptchaData['error-codes']
-                            ?? []
-                    ]
-                );
+                Log::channel('audit')->warning('REGISTRO_FALLIDO_RECAPTCHA', [
+                    'que' => 'Registro bloqueado por reCAPTCHA',
+                    'quien' => $request->email,
+                    'cuando' => now()->toDateTimeString(),
+                    'donde' => $request->ip(),
+                    'descripcion' => 'El usuario no superó la verificación reCAPTCHA'
+                ]);
 
                 return back()
-                    ->withErrors([
-                        'g-recaptcha-response' =>
-                            'Verifica el reCAPTCHA.'
-                    ])
+                    ->withErrors(['g-recaptcha-response' => 'Verifica el reCAPTCHA.'])
                     ->withInput();
             }
 
-            // Crear usuario
             $user = User::create([
                 'name' => $request->name,
                 'apellido' => $request->apellido,
                 'email' => $request->email,
-                'password' => Hash::make(
-                    $request->password
-                ),
+                'password' => Hash::make($request->password),
                 'rol' => 'guest'
             ]);
 
-            Log::info(
-                'Nuevo usuario registrado',
-                [
-                    'email' => $user->email,
-                    'rol' => $user->rol,
-                    'ip' => $request->ip()
-                ]
-            );
-
-            // Auditoría
-            AuditLog::create([
-                'user_id' => $user->id,
-                'accion' => 'REGISTRO',
+            Log::info('Nuevo usuario registrado', [
                 'email' => $user->email,
-                'ip' => $request->ip(),
-                'descripcion' =>
-                    'Nuevo usuario registrado'
+                'rol' => $user->rol,
+                'ip' => $request->ip()
+            ]);
+
+            Log::channel('audit')->info('REGISTRO', [
+                'que' => 'Registro de usuario guest',
+                'quien' => $user->email,
+                'cuando' => now()->toDateTimeString(),
+                'donde' => $request->ip(),
+                'rol' => $user->rol,
+                'descripcion' => 'Nuevo usuario registrado correctamente'
             ]);
 
             return redirect()
                 ->route('login')
-                ->with(
-                    'success',
-                    'Usuario registrado correctamente.'
-                );
+                ->with('success', 'Usuario registrado correctamente.');
 
         } catch (\Exception $e) {
-
-            Log::error(
-                'Error en registro',
-                [
-                    'email' => $request->email,
-                    'ip' => $request->ip(),
-                    'error' => $e->getMessage()
-                ]
-            );
+            Log::error('Error en registro', [
+                'email' => $request->email,
+                'ip' => $request->ip(),
+                'error' => $e->getMessage()
+            ]);
 
             return back()
-                ->withErrors([
-                    'email' =>
-                        'Ocurrió un error al registrar.'
-                ])
+                ->withErrors(['email' => 'Ocurrió un error al registrar.'])
                 ->withInput();
         }
     }
 
-    /**
-     * LOGIN
-     */
     public function login(Request $request)
     {
         try {
-
-            // Sanitización
             $request->merge([
-                'email' =>
-                    strtolower(
-                        trim($request->email)
-                    )
+                'email' => strtolower(trim($request->email))
             ]);
 
-            Log::debug(
-                'Datos sanitizados para login',
-                [
-                    'email' => $request->email,
-                    'ip' => $request->ip()
-                ]
-            );
+            Log::debug('Datos sanitizados para login', [
+                'email' => $request->email,
+                'ip' => $request->ip()
+            ]);
 
-            // Validación
             $request->validate([
                 'email' => 'required|email',
                 'password' => 'required',
-                'g-recaptcha-response' =>
-                    'required'
-
+                'g-recaptcha-response' => 'required'
             ], [
-                'email.required' =>
-                    'El correo es obligatorio.',
-
-                'email.email' =>
-                    'El correo no es válido.',
-
-                'password.required' =>
-                    'La contraseña es obligatoria.',
-
-                'g-recaptcha-response.required' =>
-                    'Completa el reCAPTCHA.'
+                'email.required' => 'El correo es obligatorio.',
+                'email.email' => 'El correo no es válido.',
+                'password.required' => 'La contraseña es obligatoria.',
+                'g-recaptcha-response.required' => 'Completa el reCAPTCHA.'
             ]);
 
-            // Verificar reCAPTCHA
-            $response = Http::asForm()->post(
-                'https://www.google.com/recaptcha/api/siteverify',
-                [
-                    'secret' =>
-                        config(
-                            'services.recaptcha.secret_key'
-                        ),
+            $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => config('services.recaptcha.secret_key'),
+                'response' => $request->input('g-recaptcha-response'),
+                'remoteip' => $request->ip()
+            ]);
 
-                    'response' =>
-                        $request->input(
-                            'g-recaptcha-response'
-                        ),
+            if (!$response->json('success')) {
+                Log::warning('Login bloqueado por reCAPTCHA', [
+                    'email' => $request->email,
+                    'ip' => $request->ip()
+                ]);
 
-                    'remoteip' =>
-                        $request->ip()
-                ]
-            );
-
-            if (
-                !$response->json('success')
-            ) {
-
-                Log::warning(
-                    'Login bloqueado por reCAPTCHA',
-                    [
-                        'email' => $request->email,
-                        'ip' => $request->ip()
-                    ]
-                );
-
-                AuditLog::create([
-                    'accion' =>
-                        'LOGIN_FALLIDO',
-                    'email' =>
-                        $request->email,
-                    'ip' =>
-                        $request->ip(),
-                    'descripcion' =>
-                        'Falló reCAPTCHA'
+                Log::channel('audit')->warning('LOGIN_FALLIDO_RECAPTCHA', [
+                    'que' => 'Login bloqueado por reCAPTCHA',
+                    'quien' => $request->email,
+                    'cuando' => now()->toDateTimeString(),
+                    'donde' => $request->ip(),
+                    'descripcion' => 'Falló la verificación reCAPTCHA'
                 ]);
 
                 return back()
-                    ->withErrors([
-                        'g-recaptcha-response' =>
-                            'La verificación reCAPTCHA falló.'
-                    ])
+                    ->withErrors(['g-recaptcha-response' => 'La verificación reCAPTCHA falló.'])
                     ->withInput();
             }
 
-            Log::info(
-                'Intento de login',
-                [
-                    'email' =>
-                        $request->email,
-                    'ip' =>
-                        $request->ip(),
-                    'hora' =>
-                        now()
-                ]
-            );
+            Log::info('Intento de login', [
+                'email' => $request->email,
+                'ip' => $request->ip(),
+                'hora' => now()
+            ]);
 
-            // Buscar usuario
-            $user = User::where(
-                'email',
-                $request->email
-            )->first();
+            $user = User::where('email', $request->email)->first();
 
-            if (!$user) {
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                Log::warning('Credenciales incorrectas', [
+                    'email' => $request->email,
+                    'ip' => $request->ip()
+                ]);
 
-                Log::warning(
-                    'Correo inexistente',
-                    [
-                        'email' =>
-                            $request->email,
-                        'ip' =>
-                            $request->ip()
-                    ]
-                );
-            }
-
-            // Verificar credenciales
-            if (
-                !$user ||
-                !Hash::check(
-                    $request->password,
-                    $user->password
-                )
-            ) {
-
-                Log::warning(
-                    'Credenciales incorrectas',
-                    [
-                        'email' =>
-                            $request->email,
-                        'ip' =>
-                            $request->ip()
-                    ]
-                );
-
-                AuditLog::create([
-                    'accion' =>
-                        'LOGIN_FALLIDO',
-                    'email' =>
-                        $request->email,
-                    'ip' =>
-                        $request->ip(),
-                    'descripcion' =>
-                        'Credenciales incorrectas'
+                Log::channel('audit')->warning('LOGIN_FALLIDO', [
+                    'que' => 'Intento de login fallido',
+                    'quien' => $request->email,
+                    'cuando' => now()->toDateTimeString(),
+                    'donde' => $request->ip(),
+                    'descripcion' => 'Correo o contraseña incorrectos'
                 ]);
 
                 return back()
-                    ->withErrors([
-                        'email' =>
-                            'Correo o contraseña incorrectos.'
-                    ])
+                    ->withErrors(['email' => 'Correo o contraseña incorrectos.'])
                     ->withInput();
             }
 
-           /**
- * MFA SOLO ADMIN Y USER
- */
-if (
-    $user->rol === 'admin' ||
-    $user->rol === 'user'
-) {
+            if ($user->rol === 'admin' || $user->rol === 'user') {
+                $otp = random_int(100000, 999999);
 
-    $otp = rand(
-        100000,
-        999999
-    );
+                session([
+                    'mfa_user_id' => $user->id,
+                    'mfa_otp_hash' => Hash::make($otp),
+                    'mfa_otp_expires_at' => now()->addMinutes(5),
+                ]);
 
-    $user->update([
-        'otp_code' => $otp,
-        'otp_expires_at' =>
-            now()->addMinutes(5)
-    ]);
+                Mail::to($user->email)->send(new OtpMail($otp));
 
-    // ENVIAR OTP POR CORREO
-    Mail::to($user->email)
-        ->send(new OtpMail($otp));
+                Log::info('OTP generado', [
+                    'email' => $user->email,
+                    'rol' => $user->rol,
+                    'ip' => $request->ip()
+                ]);
 
-    session([
-        'mfa_user_id' =>
-            $user->id
-    ]);
+                Log::channel('audit')->info('OTP_GENERADO', [
+                    'que' => 'Generación de código MFA',
+                    'quien' => $user->email,
+                    'cuando' => now()->toDateTimeString(),
+                    'donde' => $request->ip(),
+                    'rol' => $user->rol,
+                    'descripcion' => 'Código MFA generado y enviado por correo'
+                ]);
 
-    Log::info(
-        'OTP generado',
-        [
-            'email' =>
-                $user->email,
-            'rol' =>
-                $user->rol,
-            'ip' =>
-                $request->ip(),
-            'otp' =>
-                $otp
-        ]
-    );
+                return redirect()->route('mfa.verify');
+            }
 
-    AuditLog::create([
-        'user_id' =>
-            $user->id,
-        'accion' =>
-            'OTP_GENERADO',
-        'email' =>
-            $user->email,
-        'ip' =>
-            $request->ip(),
-        'descripcion' =>
-            'Código MFA generado y enviado por correo'
-    ]);
-
-    return redirect()
-        ->route('mfa.verify');
-}
-
-            /**
-             * GUEST ENTRA DIRECTO
-             */
             Auth::login($user);
+            $request->session()->regenerate();
 
-            $request
-                ->session()
-                ->regenerate();
-
-            Log::info(
-                'Login exitoso sin MFA',
-                [
-                    'email' =>
-                        $user->email,
-                    'rol' =>
-                        $user->rol,
-                    'ip' =>
-                        $request->ip()
-                ]
-            );
-
-            AuditLog::create([
-                'user_id' =>
-                    $user->id,
-                'accion' =>
-                    'LOGIN_EXITOSO',
-                'email' =>
-                    $user->email,
-                'ip' =>
-                    $request->ip(),
-                'descripcion' =>
-                    'Login guest sin MFA'
+            Log::info('Login exitoso sin MFA', [
+                'email' => $user->email,
+                'rol' => $user->rol,
+                'ip' => $request->ip()
             ]);
 
-            return redirect()
-                ->route('guest');
+            Log::channel('audit')->info('LOGIN_EXITOSO', [
+                'que' => 'Inicio de sesión',
+                'quien' => $user->email,
+                'cuando' => now()->toDateTimeString(),
+                'donde' => $request->ip(),
+                'rol' => $user->rol,
+                'descripcion' => 'Login guest sin MFA'
+            ]);
+
+            return redirect()->route('guest');
 
         } catch (\Exception $e) {
-
-            Log::error(
-                'Error en login',
-                [
-                    'email' =>
-                        $request->email,
-                    'ip' =>
-                        $request->ip(),
-                    'error' =>
-                        $e->getMessage()
-                ]
-            );
+            Log::error('Error en login', [
+                'email' => $request->email,
+                'ip' => $request->ip(),
+                'error' => $e->getMessage()
+            ]);
 
             return back()
-                ->withErrors([
-                    'email' =>
-                        'Ocurrió un error al iniciar sesión.'
-                ]);
+                ->withErrors(['email' => 'Ocurrió un error al iniciar sesión.']);
         }
     }
 
-    /**
-     * FORM MFA
-     */
     public function showMfaForm()
     {
-        if (
-            !session()->has(
-                'mfa_user_id'
-            )
-        ) {
-            return redirect()
-                ->route('login');
+        if (!session()->has('mfa_user_id')) {
+            return redirect()->route('login');
         }
 
-        return view(
-            'mfa-verify'
-        );
+        return view('mfa-verify');
     }
 
-    /**
-     * VERIFICAR MFA
-     */
-    public function verifyMfa(
-        Request $request
-    ) {
+    public function verifyMfa(Request $request)
+    {
         $request->validate([
-            'code' =>
-                'required|numeric'
+            'code' => 'required|numeric'
         ]);
 
-        if (
-            !session()->has(
-                'mfa_user_id'
-            )
-        ) {
-            return redirect()
-                ->route('login');
+        if (!session()->has('mfa_user_id')) {
+            return redirect()->route('login');
         }
 
-        $user = User::find(
-            session(
-                'mfa_user_id'
-            )
-        );
+        $user = User::find(session('mfa_user_id'));
 
         if (
             !$user ||
-            $user->otp_code
-                != $request->code ||
-            now()->greaterThan(
-                $user->otp_expires_at
-            )
+            !Hash::check($request->code, session('mfa_otp_hash')) ||
+            now()->greaterThan(session('mfa_otp_expires_at'))
         ) {
+            Log::warning('MFA fallido', [
+                'email' => $user?->email,
+                'ip' => $request->ip()
+            ]);
 
-            Log::warning(
-                'MFA fallido',
-                [
-                    'email' =>
-                        $user?->email,
-                    'ip' =>
-                        $request->ip()
-                ]
-            );
+            Log::channel('audit')->warning('MFA_FALLIDO', [
+                'que' => 'Verificación MFA fallida',
+                'quien' => $user?->email,
+                'cuando' => now()->toDateTimeString(),
+                'donde' => $request->ip(),
+                'descripcion' => 'Código MFA incorrecto o expirado'
+            ]);
 
             return back()
-                ->withErrors([
-                    'code' =>
-                        'Código incorrecto o expirado.'
-                ]);
+                ->withErrors(['code' => 'Código incorrecto o expirado.']);
         }
 
-        // Restricción admin IP
-        if (
-            $user->rol === 'admin'
-        ) {
+        if ($user->rol === 'admin') {
+            $ipPermitida = '127.0.0.1';
 
-            $ipPermitida =
-                '127.0.0.1';
+            if ($request->ip() !== $ipPermitida && $request->ip() !== '::1') {
+                Log::error('Admin bloqueado por IP', [
+                    'email' => $user->email,
+                    'ip' => $request->ip()
+                ]);
 
-            if (
-                $request->ip()
-                    !== $ipPermitida &&
-                $request->ip()
-                    !== '::1'
-            ) {
+                Log::channel('audit')->warning('ADMIN_BLOQUEADO_IP', [
+                    'que' => 'Bloqueo de administrador por IP',
+                    'quien' => $user->email,
+                    'cuando' => now()->toDateTimeString(),
+                    'donde' => $request->ip(),
+                    'rol' => $user->rol,
+                    'descripcion' => 'Intento de acceso admin desde IP no autorizada'
+                ]);
 
-                Log::error(
-                    'Admin bloqueado por IP',
-                    [
-                        'email' =>
-                            $user->email,
-                        'ip' =>
-                            $request->ip()
-                    ]
-                );
-
-                session()->forget(
-                    'mfa_user_id'
-                );
+                session()->forget([
+                    'mfa_user_id',
+                    'mfa_otp_hash',
+                    'mfa_otp_expires_at'
+                ]);
 
                 return redirect()
                     ->route('login')
-                    ->withErrors([
-                        'email' =>
-                            'IP no autorizada.'
-                    ]);
+                    ->withErrors(['email' => 'IP no autorizada.']);
             }
         }
 
-        $user->update([
-            'otp_code' => null,
-            'otp_expires_at' => null
+        session()->forget([
+            'mfa_user_id',
+            'mfa_otp_hash',
+            'mfa_otp_expires_at'
         ]);
 
         Auth::login($user);
+        $request->session()->regenerate();
 
-        $request
-            ->session()
-            ->regenerate();
+        Log::info('Login MFA exitoso', [
+            'email' => $user->email,
+            'rol' => $user->rol,
+            'ip' => $request->ip()
+        ]);
 
-        session()->forget(
-            'mfa_user_id'
-        );
+        Log::channel('audit')->info('LOGIN_MFA_EXITOSO', [
+            'que' => 'Inicio de sesión con MFA',
+            'quien' => $user->email,
+            'cuando' => now()->toDateTimeString(),
+            'donde' => $request->ip(),
+            'rol' => $user->rol,
+            'descripcion' => 'MFA verificado correctamente'
+        ]);
 
-        Log::info(
-            'Login MFA exitoso',
-            [
-                'email' =>
-                    $user->email,
-                'rol' =>
-                    $user->rol,
-                'ip' =>
-                    $request->ip()
-            ]
-        );
-
-        if (
-            $user->rol === 'admin'
-        ) {
-            return redirect()
-                ->route('admin');
+        if ($user->rol === 'admin') {
+            return redirect()->route('admin');
         }
 
-        if (
-            $user->rol === 'user'
-        ) {
-            return redirect()
-                ->route('user');
+        if ($user->rol === 'user') {
+            return redirect()->route('user');
         }
 
-        return redirect()
-            ->route('guest');
+        return redirect()->route('guest');
     }
 
-    /**
-     * LOGOUT
-     */
-    public function logout(
-        Request $request
-    ) {
+    public function logout(Request $request)
+    {
         $user = Auth::user();
 
-        Log::info(
-            'Logout',
-            [
-                'email' =>
-                    $user?->email,
-                'rol' =>
-                    $user?->rol,
-                'ip' =>
-                    $request->ip()
-            ]
-        );
+        Log::info('Logout', [
+            'email' => $user?->email,
+            'rol' => $user?->rol,
+            'ip' => $request->ip()
+        ]);
 
-        AuditLog::create([
-            'user_id' =>
-                $user?->id,
-            'accion' =>
-                'LOGOUT',
-            'email' =>
-                $user?->email,
-            'ip' =>
-                $request->ip(),
-            'descripcion' =>
-                'Cierre de sesión'
+        Log::channel('audit')->info('LOGOUT', [
+            'que' => 'Cierre de sesión',
+            'quien' => $user?->email,
+            'cuando' => now()->toDateTimeString(),
+            'donde' => $request->ip(),
+            'rol' => $user?->rol,
+            'descripcion' => 'El usuario cerró sesión'
         ]);
 
         Auth::logout();
 
-        $request
-            ->session()
-            ->invalidate();
-
-        $request
-            ->session()
-            ->regenerateToken();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect('/login');
     }
